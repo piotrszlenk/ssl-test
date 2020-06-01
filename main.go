@@ -9,13 +9,13 @@ import (
 
 func main() {
 	// Parse CLI arguments
-	endpointFile := flag.String("endpointlist", "endpoints.txt", "Flat file with list of endpoints and ports")
+	endpointFile := flag.String("endpoints-file", "endpoints.txt", "Flat file with list of endpoints and ports")
 	debugFlag := flag.Bool("debug", false, "Enable debug logging.")
 	flag.Parse()
 	lc := logz.LoggerConfig{*debugFlag}
 	logger := logz.GetInstance(lc)
 	logger.Debug.Println("Command line arguments: ")
-	logger.Debug.Println(" -endpointlist set to:", *endpointFile)
+	logger.Debug.Println(" -endpoints-file set to:", *endpointFile)
 	logger.Debug.Println(" -debug set to:", *debugFlag)
 
 	// Create list of endpoint objects
