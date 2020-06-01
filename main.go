@@ -8,19 +8,18 @@ import (
 
 func main() {
 	// Parse CLI arguments
-	urlListFile = flag.String("urllist", "urls.txt", "Flat file with list of URLs")
+	fqdnFile = flag.String("fqdnlist", "fqdns.txt", "Flat file with list of FQDNs and ports")
 	debugFlag := flag.Bool("debug", false, "Enable debug logging.")
 	flag.Parse()
 	lc := logz.LoggerConfig{*debugFlag}
 	logger := logz.GetInstance(lc)
 	logger.Debug.Println("Command line arguments: ")
-	logger.Debug.Println(" -urlist set to:", *urlListFile)
+	logger.Debug.Println(" -fqdnlist set to:", *fqdnFile)
 	logger.Debug.Println(" -debug set to:", *debugFlag)
 
-	// Create empty device list and load content from inventory file
-	logger.Info.Println("Loading device list from:", *databaseFile)
-	devices := device_inventory.NewDevices(*databaseFile, *logger)
-	_, err := devices.LoadDevices()
+	// Create list of fqdn objects
+	logger.Info.Println("Loading FQDNs from:", *fqdnFile)
+	fqdns, err := fqdn.LoadFQDNs(*fqdnFile, *logger)
 	if err != nil {
 		logger.Error.Fatalln(err)
 	}
