@@ -5,18 +5,19 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sync"
 )
+
+var logger *LogHandler
+var initLog sync.Once
 
 // LogHandler stores pointers to various log level loggers
 type LogHandler struct {
-	Debug   *log.Logger
-	Error   *log.Logger
-	Info    *log.Logger
-	Warning *log.Logger
-}
-
-type LoggerConfig struct {
-	Debug bool
+	Debug     *log.Logger
+	Error     *log.Logger
+	Info      *log.Logger
+	Warning   *log.Logger
+	DebugMode bool
 }
 
 // SetHandles sets log handles for each log level
@@ -28,12 +29,22 @@ func (e *LogHandler) SetHandles(traceHandle io.Writer, errorHandle io.Writer, in
 }
 
 // GetInstance returns LogHandler instance.
-func GetInstance(lc LoggerConfig) *LogHandler {
-	var logger *LogHandler = new(LogHandler)
-	if lc.Debug {
-		logger.SetHandles(os.Stdout, os.Stderr, os.Stdout, os.Stdout)
-	} else {
+func InitLog() *LogHandler {
+	initLog.Do(func() {
+		logger = new(LogHandler)
 		logger.SetHandles(ioutil.Discard, os.Stderr, os.Stdout, os.Stdout)
-	}
+	})
+	return logger
+}
+
+func InitDebugLog() *LogHandler {
+	initLog.Do(func() {
+		logger = new(LogHandler)
+		logger.SetHandles(os.Stdout, os.Stderr, os.Stdout, os.Stdout)
+	})
+	return logger
+}
+
+func Logger() *LogHandler {
 	return logger
 }

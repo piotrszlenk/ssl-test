@@ -10,9 +10,8 @@ import (
 )
 
 type Endpoints struct {
-	Items  []Endpoint
-	logger logz.LogHandler
-	path   string
+	Items []Endpoint
+	path  string
 }
 
 type Endpoint struct {
@@ -20,9 +19,8 @@ type Endpoint struct {
 	Port uint64
 }
 
-func NewEndpoints(path string, logger logz.LogHandler) *Endpoints {
+func NewEndpoints(path string) *Endpoints {
 	e := new(Endpoints)
-	e.logger = logger
 	e.path = path
 	return e
 }
@@ -30,7 +28,7 @@ func NewEndpoints(path string, logger logz.LogHandler) *Endpoints {
 func (e *Endpoints) LoadEndpoints() (Endpoints, error) {
 	csvfile, err := os.Open(e.path)
 	if err != nil {
-		e.logger.Error.Fatalln("Unable to read the file.")
+		logz.Logger().Error.Fatalln("Unable to read the file.")
 	}
 	r := csv.NewReader(csvfile)
 	for {
@@ -39,14 +37,14 @@ func (e *Endpoints) LoadEndpoints() (Endpoints, error) {
 			break
 		}
 		if err != nil {
-			e.logger.Error.Fatalln("Unable to read record.")
+			logz.Logger().Error.Fatalln("Unable to read record.")
 		}
-		e.logger.Debug.Printf("Read record: %s", entry)
+		logz.Logger().Debug.Printf("Read record: %s", entry)
 		port, _ := strconv.ParseUint(entry[0], 10, 16)
 		e.addEndpoint(Endpoint{entry[1], port})
 	}
 
-	e.logger.Debug.Printf("Loaded %d records from %s.", len(e.Items), e.path)
+	logz.Logger().Debug.Printf("Loaded %d records from %s.", len(e.Items), e.path)
 
 	return *e, nil
 }

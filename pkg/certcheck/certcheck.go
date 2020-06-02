@@ -3,14 +3,16 @@ package certcheck
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
+	"time"
+
+	"github.com/piotrszlenk/ssl-test/pkg/logz"
 
 	"github.com/piotrszlenk/ssl-test/pkg/endpoint"
-	"github.com/piotrszlenk/ssl-test/pkg/logz"
 )
 
 type TestTargets struct {
 	Items  []TestTarget
-	logger logz.LogHandler
 	caPath *string
 }
 
@@ -19,10 +21,9 @@ type TestTarget struct {
 	res string
 }
 
-func NewTestTargets(epts *endpoint.Endpoints, caPath *string, logger logz.LogHandler) *TestTargets {
+func NewTestTargets(epts *endpoint.Endpoints, caPath *string) *TestTargets {
 	tt := new(TestTargets)
 	tt.caPath = caPath
-	tt.logger = logger
 
 	for _, e := range epts.Items {
 		tt.Items = append(tt.Items, TestTarget{e, ""})
@@ -30,25 +31,29 @@ func NewTestTargets(epts *endpoint.Endpoints, caPath *string, logger logz.LogHan
 	return tt
 }
 
-func (t *TestTargets) Test(logger logz.LogHandler) {
+func (t *TestTargets) Test() {
 	for _, i := range t.Items {
-		logger.Info.Printf("Testing %s on port %d\n", i.ept.Fqdn, i.ept.Port)
-		i.testCertificateChain(t.caPath, t.logger)
+		logz.Logger().Info.Printf("Testing %s on port %d\n", i.ept.Fqdn, i.ept.Port)
+		i.testCertificateChain(t.caPath)
 	}
 }
 
-func (t *TestTarget) testCertificateChain(caPath *string, logger logz.LogHandler) (*TestTarget, error) {
+func (t *TestTarget) testCertificateChain(caPath *string) (*TestTarget, error) {
 	cfg := tls.Config{InsecureSkipVerify: true}
 	connStr := fmt.Sprintf("%s:%d", t.ept.Fqdn, t.ept.Port)
-	conn, err := tls.Dial("tcp", connStr, &cfg)
+
+	duration, _ := time.ParseDuration("15s")
+	dialer := net.Dialer{Timeout: duration}
+	conn, err := tls.DialWithDialer(&dialer, "tcp", connStr, &cfg)
 	if err != nil {
-		logger.Error.Printf("Failed to connect: %s\n", err.Error())
+		logz.Logger().Error.Printf("Failed to connect: %s\n", err.Error())
 		return t, nil
 	}
-	logger.Info.Printf("Certificate chain sent by the server: %s:%d\n", t.ept.Fqdn, t.ept.Port)
+	defer conn.Close()
+
+	logz.Logger().Info.Printf("Certificate chain sent by the server: %s:%d\n", t.ept.Fqdn, t.ept.Port)
 	for _, cert := range conn.ConnectionState().PeerCertificates {
-		logger.Info.Printf("CN: %s OU: %s ValidNotBefore: %s ValidNotAfter: %s\n", cert.Subject.CommonName, cert.Subject.Organization, cert.NotBefore, cert.NotAfter)
+		logz.Logger().Info.Printf("CN: %s OU: %s ValidNotBefore: %s ValidNotAfter: %s\n", cert.Subject.CommonName, cert.Subject.Organization, cert.NotBefore, cert.NotAfter)
 	}
-	conn.Close()
 	return t, nil
 }
