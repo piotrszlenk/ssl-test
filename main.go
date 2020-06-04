@@ -40,5 +40,6 @@ func main() {
 	logger.Info.Println("Creating test targets from loaded endpoints.")
 	testtargets := certcheck.NewTestTargets(endpoints, caPath)
 	testtargets.Test()
+	testtargets.PrintResults()
 	//logger.Debug.Print(testtargets)
 }

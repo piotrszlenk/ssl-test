@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/piotrszlenk/ssl-test/pkg/logz"
@@ -13,7 +14,7 @@ import (
 )
 
 type TestTargets struct {
-	Items  []TestTarget
+	Items  []*TestTarget
 	caPath *string
 }
 
@@ -36,16 +37,41 @@ func NewTestTargets(epts *endpoint.Endpoints, caPath *string) *TestTargets {
 	tt.caPath = caPath
 
 	for _, e := range epts.Items {
-		tt.Items = append(tt.Items, TestTarget{e, NOT_COMPLETED, nil})
+		tt.Items = append(tt.Items, &TestTarget{e, NOT_COMPLETED, nil})
 	}
 	return tt
 }
 
-func (t *TestTargets) Test() *TestTargets {
-	for _, i := range t.Items {
-		logz.Logger().Info.Printf("Testing %s on port %d\n", i.ept.Fqdn, i.ept.Port)
-		i.testCertificateChain(t.caPath)
+func Test(c <-chan *TestTarget, caPath *string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for tt := range c {
+		logz.Logger().Info.Printf("Testing endpoint %s on port %d\n", tt.ept.Fqdn, tt.ept.Port)
+		tt.testCertificateChain(caPath)
 	}
+}
+
+func (t *TestTargets) Test() *TestTargets {
+	var wg sync.WaitGroup
+	wg.Add(10)
+	c := make(chan *TestTarget)
+
+	go Test(c, t.caPath, &wg)
+	go Test(c, t.caPath, &wg)
+	go Test(c, t.caPath, &wg)
+	go Test(c, t.caPath, &wg)
+	go Test(c, t.caPath, &wg)
+	go Test(c, t.caPath, &wg)
+	go Test(c, t.caPath, &wg)
+	go Test(c, t.caPath, &wg)
+	go Test(c, t.caPath, &wg)
+	go Test(c, t.caPath, &wg)
+
+	for _, i := range t.Items {
+		c <- i
+		logz.Logger().Debug.Printf("Sending TestTarget (%s on port %d) to the channel.\n", i.ept.Fqdn, i.ept.Port)
+	}
+	close(c)
+	wg.Wait()
 	return t
 }
 
@@ -63,11 +89,22 @@ func (t *TestTarget) testCertificateChain(caPath *string) (*TestTarget, error) {
 	}
 	defer conn.Close()
 
-	logz.Logger().Info.Printf("Certificate chain sent by the server: %s:%d\n", t.ept.Fqdn, t.ept.Port)
-	for _, cert := range conn.ConnectionState().PeerCertificates {
-		logz.Logger().Info.Printf("CN: %s OU: %s ValidNotBefore: %s ValidNotAfter: %s\n", cert.Subject.CommonName, cert.Subject.Organization, cert.NotBefore, cert.NotAfter)
-		t.res = OK
-		t.crts = conn.ConnectionState().PeerCertificates
-	}
+	logz.Logger().Debug.Printf("Certificate chain sent by the server: %s:%d\n", t.ept.Fqdn, t.ept.Port)
+	t.res = OK
+	t.crts = conn.ConnectionState().PeerCertificates
 	return t, nil
+}
+
+func (t *TestTargets) PrintResults() {
+	for _, testtarget := range t.Items {
+		if testtarget.res == FAILED {
+			logz.Logger().Info.Printf("Test failed for endpoint: %s:%d\n", testtarget.ept.Fqdn, testtarget.ept.Port)
+		}
+		if testtarget.res == OK {
+			logz.Logger().Info.Printf("Certificate chain sent by the endpoint: %s:%d\n", testtarget.ept.Fqdn, testtarget.ept.Port)
+			for _, cert := range testtarget.crts {
+				logz.Logger().Info.Printf("CN: %s OU: %s ValidNotBefore: %s ValidNotAfter: %s\n", cert.Subject.CommonName, cert.Subject.Organization, cert.NotBefore, cert.NotAfter)
+			}
+		}
+	}
 }
