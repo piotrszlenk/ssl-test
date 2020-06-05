@@ -51,25 +51,20 @@ func Test(c <-chan *TestTarget, caPath *string, wg *sync.WaitGroup) {
 }
 
 func (t *TestTargets) Test() *TestTargets {
+	var numWorkers = 5
 	var wg sync.WaitGroup
-	wg.Add(10)
-	c := make(chan *TestTarget)
+	wg.Add(numWorkers)
 
-	go Test(c, t.caPath, &wg)
-	go Test(c, t.caPath, &wg)
-	go Test(c, t.caPath, &wg)
-	go Test(c, t.caPath, &wg)
-	go Test(c, t.caPath, &wg)
-	go Test(c, t.caPath, &wg)
-	go Test(c, t.caPath, &wg)
-	go Test(c, t.caPath, &wg)
-	go Test(c, t.caPath, &wg)
-	go Test(c, t.caPath, &wg)
-
+	c := make(chan *TestTarget, len(t.Items))
 	for _, i := range t.Items {
 		c <- i
 		logz.Logger().Debug.Printf("Sending TestTarget (%s on port %d) to the channel.\n", i.ept.Fqdn, i.ept.Port)
 	}
+
+	for i := 0; i < numWorkers; i++ {
+		go Test(c, t.caPath, &wg)
+	}
+
 	close(c)
 	wg.Wait()
 	return t

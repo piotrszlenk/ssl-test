@@ -12,7 +12,8 @@ Tool reads a flat text CSV file that contains list of TCP SSL endpoints with por
 
 ## Sample test output
 
-```$ ./main -endpoints-file example.txt -capath "/usr/local/etc/openssl/cert.pem"
+```
+$ ./main -endpoints-file example.txt -capath "/usr/local/etc/openssl/cert.pem"
 INFO: 2020/06/05 19:53:01 main.go:32: Loading endpoints from: example.txt
 INFO: 2020/06/05 19:53:01 main.go:40: Creating test targets from loaded endpoints.
 INFO: 2020/06/05 19:53:01 certcheck.go:48: Testing endpoint google.com on port 443
@@ -34,5 +35,6 @@ INFO: 2020/06/05 19:53:01 certcheck.go:106: CN: *.www.yahoo.com OU: [Oath Inc] V
 INFO: 2020/06/05 19:53:01 certcheck.go:106: CN: DigiCert SHA2 High Assurance Server CA OU: [DigiCert Inc] ValidNotBefore: 2013-10-22 12:00:00 +0000 UTC ValidNotAfter: 2028-10-22 12:00:00 +0000 UTC
 INFO: 2020/06/05 19:53:01 certcheck.go:104: Certificate chain sent by the endpoint: feedly.com:443
 INFO: 2020/06/05 19:53:01 certcheck.go:106: CN: *.feedly.com OU: [] ValidNotBefore: 2018-02-06 00:00:00 +0000 UTC ValidNotAfter: 2021-05-01 12:00:00 +0000 UTC
-INFO: 2020/06/05 19:53:01 certcheck.go:106: CN: RapidSSL RSA CA 2018 OU: [DigiCert Inc] ValidNotBefore: 2017-11-06 12:23:33 +0000 UTC ValidNotAfter: 2027-11-06 12:23:33 +0000 UTC```
+INFO: 2020/06/05 19:53:01 certcheck.go:106: CN: RapidSSL RSA CA 2018 OU: [DigiCert Inc] ValidNotBefore: 2017-11-06 12:23:33 +0000 UTC ValidNotAfter: 2027-11-06 12:23:33 +0000 UTC
+```
 
