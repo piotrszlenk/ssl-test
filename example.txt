@@ -1,2 +1,5 @@
 443,google.com
 443,cnn.com
+443,gmail.com
+443,yahoo.com
+443,feedly.com
