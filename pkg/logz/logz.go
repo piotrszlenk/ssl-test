@@ -29,18 +29,15 @@ func (e *LogHandler) SetHandles(traceHandle io.Writer, errorHandle io.Writer, in
 }
 
 // GetInstance returns LogHandler instance.
-func InitLog() *LogHandler {
+func InitLog(debugflag *bool) *LogHandler {
 	initLog.Do(func() {
-		logger = new(LogHandler)
-		logger.SetHandles(ioutil.Discard, os.Stderr, os.Stdout, os.Stdout)
-	})
-	return logger
-}
-
-func InitDebugLog() *LogHandler {
-	initLog.Do(func() {
-		logger = new(LogHandler)
-		logger.SetHandles(os.Stdout, os.Stderr, os.Stdout, os.Stdout)
+		if *debugflag {
+			logger = new(LogHandler)
+			logger.SetHandles(os.Stdout, os.Stderr, os.Stdout, os.Stdout)
+		} else {
+			logger = new(LogHandler)
+			logger.SetHandles(ioutil.Discard, os.Stderr, os.Stdout, os.Stdout)
+		}
 	})
 	return logger
 }

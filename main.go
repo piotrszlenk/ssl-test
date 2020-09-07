@@ -17,11 +17,7 @@ func main() {
 	caPath := flag.String("capath", "/private/etc/ssl", "Path to OpenSSL CA dir")
 
 	flag.Parse()
-	if *debugFlag {
-		logger = logz.InitDebugLog()
-	} else {
-		logger = logz.InitLog()
-	}
+	logger = logz.InitLog(debugFlag)
 
 	logger.Debug.Println("Command line arguments: ")
 	logger.Debug.Println(" -endpoints-file set to:", *endpointFile)
